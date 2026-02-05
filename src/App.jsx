@@ -576,10 +576,537 @@ function NewsTicker() {
   );
 }
 
+// Shareable Crisis Card - generates a downloadable/shareable image-style card
+function CrisisCard({ daysInPower, trussMultiple, daysRemaining, eggProgress, onClose }) {
+  const cardRef = useRef(null);
+  const [downloading, setDownloading] = useState(false);
+
+  const downloadCard = async () => {
+    if (!cardRef.current) return;
+    setDownloading(true);
+
+    try {
+      // Use html2canvas dynamically loaded
+      const html2canvas = (await import('https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/+esm')).default;
+      const canvas = await html2canvas(cardRef.current, {
+        backgroundColor: '#1a0525',
+        scale: 2,
+      });
+      const link = document.createElement('a');
+      link.download = `crisis-update-${daysInPower}-days.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    } catch (err) {
+      // Fallback: just alert to screenshot
+      alert('Screenshot this card to share! 📸');
+    }
+    setDownloading(false);
+  };
+
+  const today = new Date().toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+
+  const crisisLevel = eggProgress > 0.8 ? "CRITICAL" : eggProgress > 0.6 ? "SEVERE" : eggProgress > 0.4 ? "ELEVATED" : "MONITORING";
+  const crisisColor = eggProgress > 0.8 ? "#FF4444" : eggProgress > 0.6 ? "#FFA500" : eggProgress > 0.4 ? "#FFD700" : "#10B981";
+
+  return (
+    <div style={{
+      position: "fixed",
+      inset: 0,
+      background: "rgba(0,0,0,0.9)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      zIndex: 1000,
+      padding: 20,
+      backdropFilter: "blur(10px)",
+    }}>
+      <div style={{ maxWidth: 400, width: "100%" }}>
+        {/* The actual card */}
+        <div
+          ref={cardRef}
+          style={{
+            background: "linear-gradient(145deg, #1a0525 0%, #0d0015 50%, #1a0a2e 100%)",
+            borderRadius: 16,
+            padding: 24,
+            border: "2px solid rgba(255, 215, 0, 0.3)",
+            position: "relative",
+            overflow: "hidden",
+          }}
+        >
+          {/* Background decoration */}
+          <div style={{
+            position: "absolute",
+            top: -50,
+            right: -50,
+            width: 150,
+            height: 150,
+            background: "radial-gradient(circle, rgba(123,45,142,0.3) 0%, transparent 70%)",
+            pointerEvents: "none",
+          }} />
+
+          {/* Header */}
+          <div style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            marginBottom: 16,
+          }}>
+            <div>
+              <div style={{
+                fontFamily: "'Space Mono', monospace",
+                fontSize: 10,
+                color: "rgba(255,255,255,0.5)",
+                textTransform: "uppercase",
+                letterSpacing: 2,
+              }}>
+                Crisis Update
+              </div>
+              <div style={{
+                fontFamily: "'Bebas Neue', sans-serif",
+                fontSize: 24,
+                color: "#FFD700",
+                lineHeight: 1,
+                marginTop: 4,
+              }}>
+                EGG WATCH 2026
+              </div>
+            </div>
+            <div style={{
+              background: crisisColor,
+              color: crisisColor === "#FFD700" ? "#1a0525" : "white",
+              padding: "4px 10px",
+              borderRadius: 4,
+              fontFamily: "'Space Mono', monospace",
+              fontSize: 10,
+              fontWeight: 700,
+              letterSpacing: 1,
+            }}>
+              {crisisLevel}
+            </div>
+          </div>
+
+          {/* Main stats */}
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: 16,
+            marginBottom: 20,
+          }}>
+            <div style={{
+              background: "rgba(255,255,255,0.05)",
+              borderRadius: 12,
+              padding: 16,
+              textAlign: "center",
+            }}>
+              <div style={{
+                fontFamily: "'Cormorant Garamond', serif",
+                fontSize: 36,
+                fontWeight: 600,
+                fontStyle: "italic",
+                color: "#FFD700",
+                lineHeight: 1,
+              }}>
+                {daysInPower}
+              </div>
+              <div style={{
+                fontFamily: "'Space Mono', monospace",
+                fontSize: 9,
+                color: "rgba(255,255,255,0.5)",
+                textTransform: "uppercase",
+                letterSpacing: 1,
+                marginTop: 4,
+              }}>
+                Days as PM
+              </div>
+            </div>
+            <div style={{
+              background: "rgba(255,255,255,0.05)",
+              borderRadius: 12,
+              padding: 16,
+              textAlign: "center",
+            }}>
+              <div style={{
+                fontFamily: "'Cormorant Garamond', serif",
+                fontSize: 36,
+                fontWeight: 600,
+                fontStyle: "italic",
+                color: "#7B2D8E",
+                lineHeight: 1,
+              }}>
+                {trussMultiple}×
+              </div>
+              <div style={{
+                fontFamily: "'Space Mono', monospace",
+                fontSize: 9,
+                color: "rgba(255,255,255,0.5)",
+                textTransform: "uppercase",
+                letterSpacing: 1,
+                marginTop: 4,
+              }}>
+                Liz Trusses
+              </div>
+            </div>
+          </div>
+
+          {/* Countdown */}
+          <div style={{
+            background: "rgba(123, 45, 142, 0.2)",
+            borderRadius: 8,
+            padding: 12,
+            textAlign: "center",
+            marginBottom: 16,
+          }}>
+            <div style={{
+              fontFamily: "'Space Mono', monospace",
+              fontSize: 10,
+              color: "rgba(255,255,255,0.5)",
+              textTransform: "uppercase",
+              letterSpacing: 1,
+              marginBottom: 4,
+            }}>
+              Egg expires in
+            </div>
+            <div style={{
+              fontFamily: "'Cormorant Garamond', serif",
+              fontSize: 28,
+              fontWeight: 600,
+              fontStyle: "italic",
+              color: "#FFD700",
+            }}>
+              {daysRemaining} days
+            </div>
+          </div>
+
+          {/* Progress bar */}
+          <div style={{ marginBottom: 16 }}>
+            <div style={{
+              display: "flex",
+              justifyContent: "space-between",
+              fontFamily: "'Space Mono', monospace",
+              fontSize: 9,
+              color: "rgba(255,255,255,0.4)",
+              marginBottom: 4,
+            }}>
+              <span>Egg integrity</span>
+              <span>{Math.round((1 - eggProgress) * 100)}%</span>
+            </div>
+            <div style={{
+              height: 8,
+              background: "rgba(255,255,255,0.1)",
+              borderRadius: 4,
+              overflow: "hidden",
+            }}>
+              <div style={{
+                width: `${(1 - eggProgress) * 100}%`,
+                height: "100%",
+                background: `linear-gradient(90deg, ${crisisColor}, #FFD700)`,
+                borderRadius: 4,
+              }} />
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            borderTop: "1px solid rgba(255,255,255,0.1)",
+            paddingTop: 12,
+          }}>
+            <div style={{
+              fontFamily: "'Space Mono', monospace",
+              fontSize: 9,
+              color: "rgba(255,255,255,0.3)",
+            }}>
+              {today}
+            </div>
+            <div style={{
+              fontFamily: "'Bebas Neue', sans-serif",
+              fontSize: 12,
+              color: "rgba(255,255,255,0.5)",
+              display: "flex",
+              alignItems: "center",
+              gap: 4,
+            }}>
+              <span>🥚</span>
+              will-keir-crack.co.uk
+            </div>
+          </div>
+        </div>
+
+        {/* Action buttons */}
+        <div style={{
+          display: "flex",
+          gap: 8,
+          marginTop: 16,
+        }}>
+          <button
+            onClick={downloadCard}
+            disabled={downloading}
+            style={{
+              flex: 1,
+              padding: "12px 20px",
+              background: "#FFD700",
+              color: "#1a0525",
+              border: "none",
+              borderRadius: 8,
+              fontFamily: "'Space Mono', monospace",
+              fontSize: 13,
+              fontWeight: 700,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
+            }}
+          >
+            {downloading ? "⏳" : "📸"} {downloading ? "Generating..." : "Download Image"}
+          </button>
+          <button
+            onClick={onClose}
+            style={{
+              padding: "12px 20px",
+              background: "rgba(255,255,255,0.1)",
+              color: "white",
+              border: "1px solid rgba(255,255,255,0.2)",
+              borderRadius: 8,
+              fontFamily: "'Space Mono', monospace",
+              fontSize: 13,
+              cursor: "pointer",
+            }}
+          >
+            ✕
+          </button>
+        </div>
+
+        <div style={{
+          textAlign: "center",
+          marginTop: 12,
+          fontFamily: "'Space Mono', monospace",
+          fontSize: 10,
+          color: "rgba(255,255,255,0.3)",
+        }}>
+          Screenshot or download to share on social media
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Prediction picker component
+function PredictionPicker({ daysInPower, onClose }) {
+  const [selectedMonth, setSelectedMonth] = useState(null);
+  const [shared, setShared] = useState(false);
+
+  const predictions = [
+    { month: "Feb 2026", label: "February", emoji: "❄️", odds: "12/1" },
+    { month: "Mar 2026", label: "March", emoji: "🌱", odds: "8/1" },
+    { month: "Apr 2026", label: "April (Easter!)", emoji: "🥚", odds: "4/1", hot: true },
+    { month: "May 2026", label: "May", emoji: "🌸", odds: "6/1" },
+    { month: "Jun 2026", label: "June", emoji: "☀️", odds: "5/1" },
+    { month: "Later", label: "He'll survive 2026", emoji: "🦄", odds: "15/1" },
+    { month: "Already", label: "He's already cracked", emoji: "💀", odds: "2/1", hot: true },
+  ];
+
+  const shareMyPrediction = () => {
+    if (!selectedMonth) return;
+    const pred = predictions.find(p => p.month === selectedMonth);
+    const text = `🔮 MY PREDICTION: Keir Starmer will crack in ${pred.label} ${pred.emoji}
+
+He's currently at ${daysInPower} days... will the egg outlast him?
+
+Make YOUR prediction: `;
+    const url = "https://will-keir-crack.co.uk";
+    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+    window.open(twitterUrl, '_blank');
+    setShared(true);
+  };
+
+  return (
+    <div style={{
+      position: "fixed",
+      inset: 0,
+      background: "rgba(0,0,0,0.9)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      zIndex: 1000,
+      padding: 20,
+      backdropFilter: "blur(10px)",
+    }}>
+      <div style={{
+        maxWidth: 400,
+        width: "100%",
+        background: "linear-gradient(145deg, #1a0525 0%, #0d0015 100%)",
+        borderRadius: 16,
+        padding: 24,
+        border: "2px solid rgba(255, 215, 0, 0.3)",
+      }}>
+        <div style={{
+          textAlign: "center",
+          marginBottom: 20,
+        }}>
+          <div style={{ fontSize: 32, marginBottom: 8 }}>🔮</div>
+          <div style={{
+            fontFamily: "'Bebas Neue', sans-serif",
+            fontSize: 28,
+            color: "#FFD700",
+            lineHeight: 1,
+          }}>
+            MAKE YOUR PREDICTION
+          </div>
+          <div style={{
+            fontFamily: "'Space Mono', monospace",
+            fontSize: 11,
+            color: "rgba(255,255,255,0.5)",
+            marginTop: 8,
+          }}>
+            When will Keir crack?
+          </div>
+        </div>
+
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: 8,
+          marginBottom: 20,
+        }}>
+          {predictions.map((pred) => (
+            <button
+              key={pred.month}
+              onClick={() => setSelectedMonth(pred.month)}
+              style={{
+                padding: "12px 8px",
+                borderRadius: 8,
+                border: selectedMonth === pred.month
+                  ? "2px solid #FFD700"
+                  : pred.hot
+                    ? "1px solid rgba(255, 68, 68, 0.5)"
+                    : "1px solid rgba(255,255,255,0.1)",
+                background: selectedMonth === pred.month
+                  ? "rgba(255, 215, 0, 0.15)"
+                  : pred.hot
+                    ? "rgba(255, 68, 68, 0.1)"
+                    : "rgba(255,255,255,0.03)",
+                cursor: "pointer",
+                textAlign: "left",
+                transition: "all 0.2s ease",
+                position: "relative",
+              }}
+            >
+              {pred.hot && (
+                <div style={{
+                  position: "absolute",
+                  top: -6,
+                  right: -6,
+                  background: "#FF4444",
+                  borderRadius: 10,
+                  padding: "2px 6px",
+                  fontSize: 8,
+                  fontFamily: "'Space Mono', monospace",
+                  color: "white",
+                  fontWeight: 700,
+                }}>
+                  HOT
+                </div>
+              )}
+              <div style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                marginBottom: 4,
+              }}>
+                <span style={{ fontSize: 18 }}>{pred.emoji}</span>
+                <span style={{
+                  fontFamily: "'Space Mono', monospace",
+                  fontSize: 12,
+                  color: selectedMonth === pred.month ? "#FFD700" : "white",
+                  fontWeight: 700,
+                }}>
+                  {pred.label}
+                </span>
+              </div>
+              <div style={{
+                fontFamily: "'Space Mono', monospace",
+                fontSize: 10,
+                color: "rgba(255,255,255,0.4)",
+              }}>
+                Odds: {pred.odds}
+              </div>
+            </button>
+          ))}
+        </div>
+
+        {selectedMonth && !shared && (
+          <button
+            onClick={shareMyPrediction}
+            style={{
+              width: "100%",
+              padding: "14px 20px",
+              background: "linear-gradient(135deg, #1DA1F2, #0d8ecf)",
+              color: "white",
+              border: "none",
+              borderRadius: 8,
+              fontFamily: "'Space Mono', monospace",
+              fontSize: 14,
+              fontWeight: 700,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
+              marginBottom: 12,
+            }}
+          >
+            <span style={{ fontSize: 16 }}>𝕏</span>
+            Share My Prediction
+          </button>
+        )}
+
+        {shared && (
+          <div style={{
+            textAlign: "center",
+            padding: "14px 20px",
+            background: "rgba(16, 185, 129, 0.2)",
+            borderRadius: 8,
+            marginBottom: 12,
+            fontFamily: "'Space Mono', monospace",
+            fontSize: 13,
+            color: "#10B981",
+          }}>
+            ✓ Prediction shared! May the egg be with you 🥚
+          </div>
+        )}
+
+        <button
+          onClick={onClose}
+          style={{
+            width: "100%",
+            padding: "12px 20px",
+            background: "transparent",
+            color: "rgba(255,255,255,0.5)",
+            border: "1px solid rgba(255,255,255,0.2)",
+            borderRadius: 8,
+            fontFamily: "'Space Mono', monospace",
+            fontSize: 13,
+            cursor: "pointer",
+          }}
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // Share buttons component
 function ShareButtons({ daysInPower, trussMultiple }) {
   const [copied, setCopied] = useState(false);
-  const siteUrl = "https://will-keir-crack.vercel.app";
+  const siteUrl = "https://will-keir-crack.co.uk";
 
   const shareText = `🥚 CRISIS UPDATE: Keir Starmer has survived ${daysInPower} days (${trussMultiple} Liz Trusses)... but will he outlast the Creme Egg?
 
@@ -736,6 +1263,8 @@ export default function App() {
   const [eggProgress, setEggProgress] = useState(getEggSeasonProgress());
   const [showConfetti, setShowConfetti] = useState(false);
   const [lastMilestone, setLastMilestone] = useState(null);
+  const [showCrisisCard, setShowCrisisCard] = useState(false);
+  const [showPrediction, setShowPrediction] = useState(false);
   const { shaking, triggerShake } = useScreenShake();
   const prevSeconds = useRef(time.seconds);
 
@@ -783,6 +1312,23 @@ export default function App() {
       overflow: "hidden",
       animation: shaking ? "screenShake 0.5s ease-in-out" : undefined,
     }}>
+      {/* Modals */}
+      {showCrisisCard && (
+        <CrisisCard
+          daysInPower={daysInPower}
+          trussMultiple={trussMultiple}
+          daysRemaining={time.days}
+          eggProgress={eggProgress}
+          onClose={() => setShowCrisisCard(false)}
+        />
+      )}
+      {showPrediction && (
+        <PredictionPicker
+          daysInPower={daysInPower}
+          onClose={() => setShowPrediction(false)}
+        />
+      )}
+
       {/* Breaking news ticker */}
       <NewsTicker />
 
@@ -1191,6 +1737,98 @@ export default function App() {
         {/* Share Buttons */}
         <div className="card" style={{ marginBottom: 16, animation: "slideUp 0.8s ease 0.55s both" }}>
           <ShareButtons daysInPower={daysInPower} trussMultiple={trussMultiple} />
+
+          {/* Action buttons for viral features */}
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: 8,
+            marginTop: 16,
+            paddingTop: 16,
+            borderTop: "1px solid rgba(255,255,255,0.1)",
+          }}>
+            <button
+              onClick={() => setShowCrisisCard(true)}
+              style={{
+                padding: "14px 12px",
+                background: "linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(123, 45, 142, 0.15))",
+                border: "1px solid rgba(255, 215, 0, 0.3)",
+                borderRadius: 10,
+                cursor: "pointer",
+                transition: "all 0.2s ease",
+                textAlign: "center",
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.transform = "scale(1.02)";
+                e.currentTarget.style.borderColor = "rgba(255, 215, 0, 0.6)";
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.transform = "scale(1)";
+                e.currentTarget.style.borderColor = "rgba(255, 215, 0, 0.3)";
+              }}
+            >
+              <div style={{ fontSize: 24, marginBottom: 6 }}>📸</div>
+              <div style={{
+                fontFamily: "'Space Mono', monospace",
+                fontSize: 11,
+                fontWeight: 700,
+                color: "#FFD700",
+                textTransform: "uppercase",
+                letterSpacing: 1,
+              }}>
+                Crisis Card
+              </div>
+              <div style={{
+                fontFamily: "'Space Mono', monospace",
+                fontSize: 9,
+                color: "rgba(255,255,255,0.4)",
+                marginTop: 4,
+              }}>
+                Shareable stats image
+              </div>
+            </button>
+
+            <button
+              onClick={() => setShowPrediction(true)}
+              style={{
+                padding: "14px 12px",
+                background: "linear-gradient(135deg, rgba(123, 45, 142, 0.15), rgba(255, 68, 68, 0.1))",
+                border: "1px solid rgba(123, 45, 142, 0.3)",
+                borderRadius: 10,
+                cursor: "pointer",
+                transition: "all 0.2s ease",
+                textAlign: "center",
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.transform = "scale(1.02)";
+                e.currentTarget.style.borderColor = "rgba(123, 45, 142, 0.6)";
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.transform = "scale(1)";
+                e.currentTarget.style.borderColor = "rgba(123, 45, 142, 0.3)";
+              }}
+            >
+              <div style={{ fontSize: 24, marginBottom: 6 }}>🔮</div>
+              <div style={{
+                fontFamily: "'Space Mono', monospace",
+                fontSize: 11,
+                fontWeight: 700,
+                color: "#9B4DCA",
+                textTransform: "uppercase",
+                letterSpacing: 1,
+              }}>
+                Predict
+              </div>
+              <div style={{
+                fontFamily: "'Space Mono', monospace",
+                fontSize: 9,
+                color: "rgba(255,255,255,0.4)",
+                marginTop: 4,
+              }}>
+                When will Keir crack?
+              </div>
+            </button>
+          </div>
         </div>
 
         {/* Milestone */}
