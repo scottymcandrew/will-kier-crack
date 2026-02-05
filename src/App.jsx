@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 
 const EASTER_MONDAY = new Date("2026-04-06T23:59:59Z");
 const PM_START = new Date("2024-07-05T00:00:00Z");
@@ -15,6 +15,194 @@ const milestones = [
   { days: 500, label: "Longer than most New Year's resolutions... combined", icon: "💪" },
   { days: 584, label: "The entire run of Fawlty Towers (12 episodes felt longer)", icon: "📺" },
 ];
+
+const PARTICLE_EMOJIS = ["🥚", "🥬", "🇬🇧", "💀", "📉", "🔥", "⭐", "✨"];
+
+// Floating ambient particles
+function AmbientParticles() {
+  const particles = useRef([...Array(25)].map((_, i) => ({
+    id: i,
+    x: Math.random() * 100,
+    y: Math.random() * 100,
+    size: Math.random() * 4 + 2,
+    speed: Math.random() * 20 + 15,
+    delay: Math.random() * 5,
+    emoji: PARTICLE_EMOJIS[Math.floor(Math.random() * PARTICLE_EMOJIS.length)],
+    isEmoji: Math.random() > 0.7,
+  })));
+
+  return (
+    <div style={{ position: "fixed", inset: 0, pointerEvents: "none", overflow: "hidden", zIndex: 0 }}>
+      {particles.current.map((p) => (
+        <div
+          key={p.id}
+          style={{
+            position: "absolute",
+            left: `${p.x}%`,
+            bottom: "-20px",
+            fontSize: p.isEmoji ? `${p.size * 4}px` : undefined,
+            width: p.isEmoji ? undefined : p.size,
+            height: p.isEmoji ? undefined : p.size,
+            borderRadius: "50%",
+            background: p.isEmoji ? undefined : `radial-gradient(circle, rgba(255,215,0,0.8), rgba(123,45,142,0.4))`,
+            boxShadow: p.isEmoji ? undefined : `0 0 ${p.size * 2}px rgba(255,215,0,0.5)`,
+            animation: `floatUp ${p.speed}s linear infinite`,
+            animationDelay: `${p.delay}s`,
+            opacity: 0.6,
+          }}
+        >
+          {p.isEmoji ? p.emoji : null}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Confetti explosion for milestones
+function ConfettiBurst({ active, onComplete }) {
+  const [particles, setParticles] = useState([]);
+
+  useEffect(() => {
+    if (active) {
+      const newParticles = [...Array(50)].map((_, i) => ({
+        id: i,
+        x: 50 + (Math.random() - 0.5) * 20,
+        y: 40,
+        vx: (Math.random() - 0.5) * 30,
+        vy: -Math.random() * 20 - 10,
+        rotation: Math.random() * 360,
+        color: ["#FFD700", "#7B2D8E", "#FF4444", "#00FF88", "#FF69B4", "#00BFFF"][Math.floor(Math.random() * 6)],
+        size: Math.random() * 10 + 5,
+        shape: Math.random() > 0.5 ? "rect" : "circle",
+      }));
+      setParticles(newParticles);
+      setTimeout(() => {
+        setParticles([]);
+        onComplete?.();
+      }, 3000);
+    }
+  }, [active, onComplete]);
+
+  return (
+    <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 100, overflow: "hidden" }}>
+      {particles.map((p) => (
+        <div
+          key={p.id}
+          style={{
+            position: "absolute",
+            left: `${p.x}%`,
+            top: `${p.y}%`,
+            width: p.size,
+            height: p.shape === "rect" ? p.size * 0.6 : p.size,
+            borderRadius: p.shape === "circle" ? "50%" : "2px",
+            background: p.color,
+            transform: `rotate(${p.rotation}deg)`,
+            animation: `confettiFall 3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards`,
+            "--vx": `${p.vx}vw`,
+            "--vy": `${p.vy}vh`,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+// Dramatic screen shake
+function useScreenShake() {
+  const [shaking, setShaking] = useState(false);
+
+  const triggerShake = useCallback(() => {
+    setShaking(true);
+    setTimeout(() => setShaking(false), 500);
+  }, []);
+
+  return { shaking, triggerShake };
+}
+
+// Pulsing glow ring around elements
+function GlowRing({ intensity = 1, color = "#FFD700", children }) {
+  return (
+    <div style={{ position: "relative" }}>
+      <div
+        style={{
+          position: "absolute",
+          inset: -20,
+          borderRadius: "50%",
+          background: `radial-gradient(circle, ${color}${Math.round(intensity * 40).toString(16).padStart(2, '0')} 0%, transparent 70%)`,
+          animation: "pulseGlow 2s ease-in-out infinite",
+          pointerEvents: "none",
+        }}
+      />
+      {children}
+    </div>
+  );
+}
+
+// Flying crack debris
+function CrackDebris({ active }) {
+  const debris = useRef([...Array(8)].map((_, i) => ({
+    id: i,
+    angle: (i / 8) * Math.PI * 2,
+    distance: Math.random() * 50 + 30,
+    size: Math.random() * 8 + 4,
+    delay: Math.random() * 0.3,
+  })));
+
+  if (!active) return null;
+
+  return (
+    <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
+      {debris.current.map((d) => (
+        <div
+          key={d.id}
+          style={{
+            position: "absolute",
+            left: "50%",
+            top: "45%",
+            width: d.size,
+            height: d.size,
+            background: "linear-gradient(135deg, #5B1A6E, #2D0A3E)",
+            borderRadius: "2px",
+            animation: `debrisFly 1s ease-out forwards`,
+            animationDelay: `${d.delay}s`,
+            "--angle": `${d.angle}rad`,
+            "--distance": `${d.distance}px`,
+            transform: "translate(-50%, -50%)",
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+// Dramatic number counter animation
+function AnimatedNumber({ value, duration = 500 }) {
+  const [displayValue, setDisplayValue] = useState(value);
+  const prevValue = useRef(value);
+
+  useEffect(() => {
+    if (value !== prevValue.current) {
+      const start = prevValue.current;
+      const end = value;
+      const startTime = Date.now();
+
+      const animate = () => {
+        const elapsed = Date.now() - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        setDisplayValue(Math.round(start + (end - start) * eased));
+
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+        }
+      };
+      animate();
+      prevValue.current = value;
+    }
+  }, [value, duration]);
+
+  return displayValue;
+}
 
 function getTimeRemaining() {
   const now = new Date();
@@ -41,11 +229,40 @@ function getEggSeasonProgress() {
   return Math.min(Math.max(elapsed / total, 0), 1);
 }
 
-function CrackingEgg({ progress }) {
+function CrackingEgg({ progress, onCrack }) {
   const crackLevel = Math.min(progress * 1.2, 1);
+  const prevCrackLevel = useRef(0);
+  const [showDebris, setShowDebris] = useState(false);
+
+  // Trigger effects when crack level increases significantly
+  useEffect(() => {
+    if (crackLevel > prevCrackLevel.current + 0.15) {
+      setShowDebris(true);
+      onCrack?.();
+      setTimeout(() => setShowDebris(false), 1000);
+    }
+    prevCrackLevel.current = crackLevel;
+  }, [crackLevel, onCrack]);
+
+  const eggShake = crackLevel > 0.6 ? "eggTremble" : crackLevel > 0.3 ? "eggWobble" : "";
+
   return (
-    <div style={{ position: "relative", width: 180, height: 240, margin: "0 auto" }}>
-      <svg viewBox="0 0 180 240" width="180" height="240">
+    <div style={{ position: "relative", width: 200, height: 260, margin: "0 auto" }}>
+      {/* Dramatic glow behind egg */}
+      <div style={{
+        position: "absolute",
+        left: "50%",
+        top: "45%",
+        transform: "translate(-50%, -50%)",
+        width: 180,
+        height: 180,
+        borderRadius: "50%",
+        background: `radial-gradient(circle, rgba(255,215,0,${0.1 + crackLevel * 0.2}) 0%, rgba(123,45,142,${0.1 + crackLevel * 0.15}) 40%, transparent 70%)`,
+        animation: "pulseGlow 2s ease-in-out infinite",
+        filter: `blur(${10 + crackLevel * 10}px)`,
+      }} />
+
+      <svg viewBox="0 0 180 240" width="200" height="260" style={{ animation: eggShake ? `${eggShake} 0.5s ease-in-out infinite` : undefined }}>
         <defs>
           <linearGradient id="eggGrad" x1="0%" y1="0%" x2="0%" y2="100%">
             <stop offset="0%" stopColor="#7B2D8E" />
@@ -54,121 +271,307 @@ function CrackingEgg({ progress }) {
             <stop offset="100%" stopColor="#2D0A3E" />
           </linearGradient>
           <linearGradient id="foilGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#FFD700" />
+            <stop offset="0%" stopColor="#FFD700">
+              <animate attributeName="stop-color" values="#FFD700;#FFA500;#FFD700" dur="3s" repeatCount="indefinite" />
+            </stop>
             <stop offset="30%" stopColor="#FFA500" />
             <stop offset="60%" stopColor="#FF8C00" />
-            <stop offset="100%" stopColor="#FFD700" />
+            <stop offset="100%" stopColor="#FFD700">
+              <animate attributeName="stop-color" values="#FFD700;#FFEC8B;#FFD700" dur="2s" repeatCount="indefinite" />
+            </stop>
           </linearGradient>
           <linearGradient id="goopGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#FFD700" />
+            <stop offset="0%" stopColor="#FFFACD" />
+            <stop offset="30%" stopColor="#FFD700" />
             <stop offset="100%" stopColor="#FF8C00" />
           </linearGradient>
           <filter id="eggShadow">
             <feDropShadow dx="0" dy="4" stdDeviation="8" floodColor="#000" floodOpacity="0.4" />
           </filter>
+          <filter id="goopGlow">
+            <feGaussianBlur stdDeviation="2" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
           <radialGradient id="sheen" cx="35%" cy="30%" r="50%">
-            <stop offset="0%" stopColor="rgba(255,255,255,0.3)" />
+            <stop offset="0%" stopColor="rgba(255,255,255,0.4)" />
             <stop offset="100%" stopColor="rgba(255,255,255,0)" />
           </radialGradient>
+          <radialGradient id="innerGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="rgba(255,215,0,0.3)" />
+            <stop offset="100%" stopColor="rgba(255,215,0,0)" />
+          </radialGradient>
+          {/* Crack texture filter */}
+          <filter id="crackRough">
+            <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="3" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="2" />
+          </filter>
         </defs>
 
-        {/* Foil wrapper bottom */}
+        {/* Foil wrapper bottom with shimmer */}
         <ellipse cx="90" cy="175" rx="52" ry="55" fill="url(#foilGrad)" filter="url(#eggShadow)" />
         <ellipse cx="90" cy="175" rx="52" ry="55" fill="url(#foilGrad)" opacity="0.8" />
-        {[...Array(8)].map((_, i) => (
-          <line key={i} x1={90 + Math.cos((i * Math.PI) / 4) * 20} y1={140}
-            x2={90 + Math.cos((i * Math.PI) / 4) * 50} y2={220}
+        {[...Array(12)].map((_, i) => (
+          <line key={i} x1={90 + Math.cos((i * Math.PI) / 6) * 20} y1={140}
+            x2={90 + Math.cos((i * Math.PI) / 6) * 50} y2={220}
             stroke="#CC8400" strokeWidth="0.5" opacity="0.4" />
+        ))}
+        {/* Foil sparkles */}
+        {[...Array(5)].map((_, i) => (
+          <circle key={`sparkle-${i}`}
+            cx={70 + i * 10} cy={165 + (i % 2) * 15} r="1.5"
+            fill="#FFFACD" opacity="0.8">
+            <animate attributeName="opacity" values="0.3;1;0.3" dur={`${1 + i * 0.3}s`} repeatCount="indefinite" />
+          </circle>
         ))}
 
         {/* Main egg body */}
         <ellipse cx="90" cy="120" rx="55" ry="75" fill="url(#eggGrad)" filter="url(#eggShadow)" />
         <ellipse cx="90" cy="120" rx="55" ry="75" fill="url(#sheen)" />
 
+        {/* Inner glow when cracking */}
+        {crackLevel > 0.3 && (
+          <ellipse cx="90" cy="120" rx="55" ry="75" fill="url(#innerGlow)" opacity={crackLevel * 0.8}>
+            <animate attributeName="opacity" values={`${crackLevel * 0.5};${crackLevel * 0.9};${crackLevel * 0.5}`} dur="1.5s" repeatCount="indefinite" />
+          </ellipse>
+        )}
+
         {/* Cadbury-style swirl text */}
         <text x="90" y="105" textAnchor="middle" fill="#FFD700"
-          fontFamily="'Georgia', serif" fontSize="14" fontWeight="bold" fontStyle="italic"
+          fontFamily="'Cormorant Garamond', serif" fontSize="14" fontWeight="bold" fontStyle="italic"
           style={{ textShadow: "0 1px 2px rgba(0,0,0,0.5)" }}>
           Creme
         </text>
         <text x="90" y="125" textAnchor="middle" fill="#FFD700"
-          fontFamily="'Georgia', serif" fontSize="18" fontWeight="bold" fontStyle="italic"
+          fontFamily="'Cormorant Garamond', serif" fontSize="18" fontWeight="bold" fontStyle="italic"
           style={{ textShadow: "0 1px 2px rgba(0,0,0,0.5)" }}>
           Egg
         </text>
 
-        {/* Crack lines - appear based on progress */}
-        {crackLevel > 0.2 && (
-          <path d={`M ${75} ${85} L ${82} ${95} L ${77} ${105} L ${84} ${112}`}
-            stroke="#2D0A3E" strokeWidth="2" fill="none" opacity={Math.min((crackLevel - 0.2) * 2, 1)} />
+        {/* Crack lines - MORE cracks, more drama */}
+        {crackLevel > 0.15 && (
+          <g filter="url(#crackRough)">
+            <path d={`M 75 82 L 80 90 L 74 98 L 79 108 L 73 115`}
+              stroke="#1a0525" strokeWidth="2.5" fill="none"
+              opacity={Math.min((crackLevel - 0.15) * 2.5, 1)}
+              strokeLinecap="round" />
+            <path d={`M 76 83 L 81 91 L 75 99 L 80 109`}
+              stroke="#FFD700" strokeWidth="0.5" fill="none"
+              opacity={Math.min((crackLevel - 0.15) * 2, 0.6)} />
+          </g>
         )}
-        {crackLevel > 0.4 && (
-          <path d={`M ${100} ${78} L ${95} ${90} L ${102} ${98} L ${97} ${108}`}
-            stroke="#2D0A3E" strokeWidth="2" fill="none" opacity={Math.min((crackLevel - 0.4) * 2, 1)} />
+        {crackLevel > 0.3 && (
+          <g filter="url(#crackRough)">
+            <path d={`M 102 75 L 96 85 L 103 93 L 95 102 L 100 112`}
+              stroke="#1a0525" strokeWidth="2.5" fill="none"
+              opacity={Math.min((crackLevel - 0.3) * 2.5, 1)}
+              strokeLinecap="round" />
+            <path d={`M 100 76 L 94 86 L 101 94`}
+              stroke="#FFD700" strokeWidth="0.5" fill="none"
+              opacity={Math.min((crackLevel - 0.3) * 2, 0.6)} />
+          </g>
         )}
-        {crackLevel > 0.6 && (
-          <path d={`M ${110} ${88} L ${105} ${100} L ${112} ${110}`}
-            stroke="#2D0A3E" strokeWidth="1.5" fill="none" opacity={Math.min((crackLevel - 0.6) * 2, 1)} />
+        {crackLevel > 0.45 && (
+          <g filter="url(#crackRough)">
+            <path d={`M 112 85 L 106 95 L 114 105 L 108 115`}
+              stroke="#1a0525" strokeWidth="2" fill="none"
+              opacity={Math.min((crackLevel - 0.45) * 2.5, 1)}
+              strokeLinecap="round" />
+          </g>
+        )}
+        {crackLevel > 0.55 && (
+          <g filter="url(#crackRough)">
+            <path d={`M 68 95 L 72 105 L 66 112`}
+              stroke="#1a0525" strokeWidth="2" fill="none"
+              opacity={Math.min((crackLevel - 0.55) * 2.5, 1)}
+              strokeLinecap="round" />
+          </g>
+        )}
+        {crackLevel > 0.7 && (
+          <g filter="url(#crackRough)">
+            <path d={`M 85 68 L 88 78 L 82 85 L 90 92`}
+              stroke="#1a0525" strokeWidth="2" fill="none"
+              opacity={Math.min((crackLevel - 0.7) * 2.5, 1)}
+              strokeLinecap="round" />
+            <path d={`M 95 70 L 100 80 L 94 88`}
+              stroke="#1a0525" strokeWidth="1.5" fill="none"
+              opacity={Math.min((crackLevel - 0.7) * 2.5, 1)}
+              strokeLinecap="round" />
+          </g>
         )}
 
-        {/* Gooey centre oozing out if cracked enough */}
-        {crackLevel > 0.7 && (
-          <g opacity={Math.min((crackLevel - 0.7) * 3, 1)}>
-            <ellipse cx="82" cy="112" rx="6" ry="4" fill="url(#goopGrad)">
-              <animate attributeName="ry" values="4;6;4" dur="2s" repeatCount="indefinite" />
+        {/* Gooey centre oozing out - MORE GOOP */}
+        {crackLevel > 0.5 && (
+          <g opacity={Math.min((crackLevel - 0.5) * 2.5, 1)} filter="url(#goopGlow)">
+            {/* Main ooze from cracks */}
+            <ellipse cx="78" cy="110" rx="7" ry="5" fill="url(#goopGrad)">
+              <animate attributeName="ry" values="5;8;5" dur="2s" repeatCount="indefinite" />
+              <animate attributeName="cy" values="110;113;110" dur="2s" repeatCount="indefinite" />
             </ellipse>
-            <ellipse cx="98" cy="108" rx="4" ry="3" fill="#FFD700">
-              <animate attributeName="ry" values="3;5;3" dur="2.5s" repeatCount="indefinite" />
+            <ellipse cx="100" cy="105" rx="5" ry="4" fill="#FFD700">
+              <animate attributeName="ry" values="4;7;4" dur="2.5s" repeatCount="indefinite" />
+            </ellipse>
+            {crackLevel > 0.7 && (
+              <>
+                <ellipse cx="85" cy="78" rx="4" ry="3" fill="url(#goopGrad)">
+                  <animate attributeName="ry" values="3;5;3" dur="1.8s" repeatCount="indefinite" />
+                </ellipse>
+                <ellipse cx="72" cy="100" rx="5" ry="6" fill="#FFD700">
+                  <animate attributeName="ry" values="6;9;6" dur="2.2s" repeatCount="indefinite" />
+                  <animate attributeName="cy" values="100;105;100" dur="2.2s" repeatCount="indefinite" />
+                </ellipse>
+                {/* Drip */}
+                <path d="M 78 115 Q 78 125 76 135 Q 74 145 78 155"
+                  stroke="url(#goopGrad)" strokeWidth="4" fill="none" strokeLinecap="round">
+                  <animate attributeName="d"
+                    values="M 78 115 Q 78 125 76 135 Q 74 145 78 155;M 78 115 Q 80 128 77 140 Q 73 152 80 162;M 78 115 Q 78 125 76 135 Q 74 145 78 155"
+                    dur="3s" repeatCount="indefinite" />
+                </path>
+              </>
+            )}
+          </g>
+        )}
+
+        {/* White cream center peeking through major cracks */}
+        {crackLevel > 0.8 && (
+          <g opacity={Math.min((crackLevel - 0.8) * 4, 1)}>
+            <ellipse cx="88" cy="95" rx="8" ry="6" fill="#FFFACD" filter="url(#goopGlow)">
+              <animate attributeName="rx" values="8;10;8" dur="2s" repeatCount="indefinite" />
             </ellipse>
           </g>
         )}
       </svg>
 
-      {/* Floating particles for extra flair */}
-      {crackLevel > 0.5 && (
-        <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", pointerEvents: "none" }}>
-          {[...Array(3)].map((_, i) => (
-            <div key={i} style={{
-              position: "absolute",
-              left: `${35 + i * 15}%`,
-              top: `${40 + i * 5}%`,
-              width: 4, height: 4,
-              borderRadius: "50%",
-              background: "#FFD700",
-              animation: `float${i} 3s ease-in-out infinite`,
-              animationDelay: `${i * 0.5}s`,
-            }} />
-          ))}
+      {/* Floating golden particles around egg */}
+      <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", pointerEvents: "none" }}>
+        {[...Array(6)].map((_, i) => (
+          <div key={i} style={{
+            position: "absolute",
+            left: `${20 + i * 12}%`,
+            top: `${30 + (i % 3) * 15}%`,
+            width: 4 + (i % 3) * 2,
+            height: 4 + (i % 3) * 2,
+            borderRadius: "50%",
+            background: `radial-gradient(circle, #FFD700, #FFA500)`,
+            boxShadow: "0 0 8px rgba(255,215,0,0.8)",
+            animation: `floatParticle${i % 3} ${2 + i * 0.5}s ease-in-out infinite`,
+            animationDelay: `${i * 0.3}s`,
+            opacity: 0.5 + crackLevel * 0.5,
+          }} />
+        ))}
+      </div>
+
+      {/* Crack debris effect */}
+      <CrackDebris active={showDebris} />
+
+      {/* Stress indicator when highly cracked */}
+      {crackLevel > 0.75 && (
+        <div style={{
+          position: "absolute",
+          top: "15%",
+          left: "50%",
+          transform: "translateX(-50%)",
+          fontSize: 24,
+          animation: "stressEmoji 0.5s ease-in-out infinite",
+        }}>
+          {crackLevel > 0.9 ? "💥" : "😰"}
         </div>
       )}
     </div>
   );
 }
 
-function CountdownBlock({ value, label }) {
+function CountdownBlock({ value, label, tick }) {
   return (
-    <div style={{
+    <div className="countdown-block" style={{
       display: "flex", flexDirection: "column", alignItems: "center",
       background: "rgba(123, 45, 142, 0.15)",
       border: "1px solid rgba(123, 45, 142, 0.3)",
       borderRadius: 12, padding: "12px 16px", minWidth: 70,
       backdropFilter: "blur(10px)",
+      animation: tick ? "countdownTick 0.3s ease-out" : undefined,
+      position: "relative",
+      overflow: "hidden",
     }}>
+      {/* Shimmer effect */}
+      <div style={{
+        position: "absolute",
+        top: 0,
+        left: "-100%",
+        width: "100%",
+        height: "100%",
+        background: "linear-gradient(90deg, transparent, rgba(255,215,0,0.1), transparent)",
+        animation: tick ? "shimmer 0.5s ease-out" : undefined,
+      }} />
       <span style={{
-        fontSize: 36, fontWeight: 800, color: "#FFD700",
-        fontFamily: "'Georgia', serif",
+        fontSize: 42, fontWeight: 600, color: "#FFD700",
+        fontFamily: "'Cormorant Garamond', serif",
+        fontStyle: "italic",
         lineHeight: 1,
         textShadow: "0 2px 10px rgba(255, 215, 0, 0.3)",
+        position: "relative",
+        zIndex: 1,
       }}>
         {String(value).padStart(2, "0")}
       </span>
       <span style={{
         fontSize: 10, textTransform: "uppercase", letterSpacing: 2,
         color: "rgba(255,255,255,0.6)", marginTop: 4,
-        fontFamily: "'Courier New', monospace",
+        fontFamily: "'Space Mono', monospace",
+        position: "relative",
+        zIndex: 1,
       }}>
         {label}
       </span>
+    </div>
+  );
+}
+
+// Breaking news ticker
+function NewsTicker() {
+  const headlines = [
+    "BREAKING: Egg still intact, nation holds breath",
+    "LIVE: Creme Egg demonstrates more structural integrity than cabinet",
+    "EXPERT ANALYSIS: Chocolate shell 'significantly more stable' than polling numbers",
+    "JUST IN: Lettuce sends supportive message to Creme Egg",
+    "DEVELOPING: Sources say egg 'cautiously optimistic' about survival chances",
+    "UPDATE: Fondant centre remains composed despite external pressure",
+    "EXCLUSIVE: Anonymous egg insider describes 'cracks appearing'",
+  ];
+
+  return (
+    <div style={{
+      position: "fixed",
+      top: 0,
+      left: 0,
+      right: 0,
+      background: "linear-gradient(90deg, #7B2D8E, #5B1A6E)",
+      padding: "8px 0",
+      overflow: "hidden",
+      zIndex: 50,
+      borderBottom: "2px solid #FFD700",
+    }}>
+      <div style={{
+        display: "flex",
+        animation: "tickerScroll 30s linear infinite",
+        whiteSpace: "nowrap",
+      }}>
+        {[...headlines, ...headlines].map((headline, i) => (
+          <span key={i} style={{
+            fontFamily: "'Space Mono', monospace",
+            fontSize: 11,
+            color: "#FFD700",
+            marginRight: 60,
+            textTransform: "uppercase",
+            letterSpacing: 1,
+          }}>
+            <span style={{ color: "#FF4444", marginRight: 8 }}>●</span>
+            {headline}
+          </span>
+        ))}
+      </div>
     </div>
   );
 }
@@ -204,6 +607,10 @@ export default function App() {
   const [time, setTime] = useState(getTimeRemaining());
   const [daysInPower, setDaysInPower] = useState(getDaysInPower());
   const [eggProgress, setEggProgress] = useState(getEggSeasonProgress());
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [lastMilestone, setLastMilestone] = useState(null);
+  const { shaking, triggerShake } = useScreenShake();
+  const prevSeconds = useRef(time.seconds);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -218,49 +625,236 @@ export default function App() {
   const nextMilestone = milestones.find((m) => daysInPower < m.days);
   const trussMultiple = (daysInPower / LIZ_TRUSS_DAYS).toFixed(1);
 
+  // Trigger confetti on new milestone
+  useEffect(() => {
+    if (currentMilestone && currentMilestone !== lastMilestone) {
+      if (lastMilestone !== null) {
+        setShowConfetti(true);
+        triggerShake();
+      }
+      setLastMilestone(currentMilestone);
+    }
+  }, [currentMilestone, lastMilestone, triggerShake]);
+
+  // Track second changes for tick animation
+  const secondChanged = time.seconds !== prevSeconds.current;
+  useEffect(() => {
+    prevSeconds.current = time.seconds;
+  }, [time.seconds]);
+
+  const handleEggCrack = useCallback(() => {
+    triggerShake();
+  }, [triggerShake]);
+
   return (
     <div style={{
       minHeight: "100vh",
       background: "linear-gradient(145deg, #1a0525 0%, #0d0015 40%, #1a0a2e 70%, #0a0010 100%)",
       color: "white",
-      fontFamily: "'Georgia', serif",
+      fontFamily: "'Cormorant Garamond', serif",
       position: "relative",
       overflow: "hidden",
+      animation: shaking ? "screenShake 0.5s ease-in-out" : undefined,
     }}>
+      {/* Breaking news ticker */}
+      <NewsTicker />
+
+      {/* Confetti system */}
+      <ConfettiBurst active={showConfetti} onComplete={() => setShowConfetti(false)} />
+
+      {/* Ambient floating particles */}
+      <AmbientParticles />
+
+      {/* Aurora effect in background */}
+      <div style={{
+        position: "fixed",
+        top: "-50%",
+        left: "50%",
+        width: "200%",
+        height: "200%",
+        background: `conic-gradient(from 0deg at 50% 50%,
+          transparent 0deg,
+          rgba(123, 45, 142, 0.03) 60deg,
+          transparent 120deg,
+          rgba(255, 215, 0, 0.02) 180deg,
+          transparent 240deg,
+          rgba(123, 45, 142, 0.03) 300deg,
+          transparent 360deg)`,
+        animation: "aurora 60s linear infinite",
+        pointerEvents: "none",
+      }} />
+
       {/* Background texture */}
       <div style={{
-        position: "fixed", inset: 0, opacity: 0.05,
+        position: "fixed", inset: 0, opacity: 0.08,
         backgroundImage: `radial-gradient(circle at 20% 50%, #7B2D8E 0%, transparent 50%),
           radial-gradient(circle at 80% 20%, #FFD700 0%, transparent 40%),
           radial-gradient(circle at 50% 80%, #5B1A6E 0%, transparent 45%)`,
         pointerEvents: "none",
+        animation: "gradientShift 20s ease infinite",
+        backgroundSize: "200% 200%",
+      }} />
+
+      {/* Subtle grid overlay */}
+      <div style={{
+        position: "fixed", inset: 0, opacity: 0.02,
+        backgroundImage: `linear-gradient(rgba(255,215,0,0.1) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255,215,0,0.1) 1px, transparent 1px)`,
+        backgroundSize: "50px 50px",
+        pointerEvents: "none",
       }} />
 
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=JetBrains+Mono:wght@400;700&display=swap');
-        
-        @keyframes float0 { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
-        @keyframes float1 { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
-        @keyframes float2 { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Space+Mono:wght@400;700&display=swap');
+
+        /* Floating particles going up */
+        @keyframes floatUp {
+          0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+          10% { opacity: 0.6; }
+          90% { opacity: 0.6; }
+          100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
+        }
+
+        /* Confetti physics */
+        @keyframes confettiFall {
+          0% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
+          100% { transform: translate(var(--vx), calc(var(--vy) + 100vh)) rotate(720deg); opacity: 0; }
+        }
+
+        /* Particle floats around egg */
+        @keyframes floatParticle0 { 0%,100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-15px) scale(1.2); } }
+        @keyframes floatParticle1 { 0%,100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-20px) scale(1.1); } }
+        @keyframes floatParticle2 { 0%,100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-12px) scale(1.3); } }
+
+        /* Debris flying from cracks */
+        @keyframes debrisFly {
+          0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+          100% {
+            transform: translate(
+              calc(-50% + cos(var(--angle)) * var(--distance)),
+              calc(-50% + sin(var(--angle)) * var(--distance))
+            ) scale(0);
+            opacity: 0;
+          }
+        }
+
+        /* Glow pulse */
+        @keyframes pulseGlow {
+          0%, 100% { transform: scale(1); opacity: 0.5; }
+          50% { transform: scale(1.1); opacity: 0.8; }
+        }
+
+        /* Egg wobble - mild */
+        @keyframes eggWobble {
+          0%, 100% { transform: rotate(0deg); }
+          25% { transform: rotate(-1deg); }
+          75% { transform: rotate(1deg); }
+        }
+
+        /* Egg tremble - intense */
+        @keyframes eggTremble {
+          0%, 100% { transform: translate(0, 0) rotate(0deg); }
+          20% { transform: translate(-2px, 1px) rotate(-2deg); }
+          40% { transform: translate(2px, -1px) rotate(2deg); }
+          60% { transform: translate(-1px, 2px) rotate(-1deg); }
+          80% { transform: translate(1px, -2px) rotate(1deg); }
+        }
+
+        /* Stress emoji bounce */
+        @keyframes stressEmoji {
+          0%, 100% { transform: translateX(-50%) scale(1); }
+          50% { transform: translateX(-50%) scale(1.3); }
+        }
+
+        /* UI animations */
         @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
         @keyframes slideUp {
-          from { opacity: 0; transform: translateY(20px); }
+          from { opacity: 0; transform: translateY(30px); }
           to { opacity: 1; transform: translateY(0); }
         }
-        @keyframes wiggle {
-          0%,100% { transform: rotate(0deg); }
-          25% { transform: rotate(-2deg); }
-          75% { transform: rotate(2deg); }
+
+        /* Screen shake */
+        @keyframes screenShake {
+          0%, 100% { transform: translate(0, 0); }
+          10% { transform: translate(-5px, -5px); }
+          20% { transform: translate(5px, 5px); }
+          30% { transform: translate(-5px, 5px); }
+          40% { transform: translate(5px, -5px); }
+          50% { transform: translate(-3px, -3px); }
+          60% { transform: translate(3px, 3px); }
+          70% { transform: translate(-2px, 2px); }
+          80% { transform: translate(2px, -2px); }
+          90% { transform: translate(-1px, -1px); }
         }
-        
+
+        /* Number flash */
+        @keyframes numberFlash {
+          0% { transform: scale(1); color: #FFD700; }
+          50% { transform: scale(1.2); color: #FFFACD; text-shadow: 0 0 20px rgba(255, 215, 0, 0.8); }
+          100% { transform: scale(1); color: #FFD700; }
+        }
+
+        /* Countdown tick */
+        @keyframes countdownTick {
+          0% { transform: scale(1); }
+          50% { transform: scale(1.05); }
+          100% { transform: scale(1); }
+        }
+
+        /* Gradient shift for background */
+        @keyframes gradientShift {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+
+        /* Aurora effect */
+        @keyframes aurora {
+          0% { transform: translateX(-50%) rotate(0deg); }
+          100% { transform: translateX(-50%) rotate(360deg); }
+        }
+
+        /* Milestone unlock */
+        @keyframes milestoneUnlock {
+          0% { transform: scale(0.8); opacity: 0; }
+          50% { transform: scale(1.1); }
+          100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* Sparkle */
+        @keyframes sparkle {
+          0%, 100% { opacity: 0; transform: scale(0); }
+          50% { opacity: 1; transform: scale(1); }
+        }
+
+        /* Shimmer effect */
+        @keyframes shimmer {
+          0% { left: -100%; }
+          100% { left: 100%; }
+        }
+
+        /* News ticker scroll */
+        @keyframes tickerScroll {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+
         .card {
           background: rgba(255,255,255,0.03);
           border: 1px solid rgba(123, 45, 142, 0.2);
           border-radius: 16px;
           padding: 24px;
           backdrop-filter: blur(20px);
+          transition: all 0.3s ease;
         }
-        
+
+        .card:hover {
+          background: rgba(255,255,255,0.05);
+          border-color: rgba(123, 45, 142, 0.4);
+          transform: translateY(-2px);
+          box-shadow: 0 10px 40px rgba(123, 45, 142, 0.2);
+        }
+
         .milestone-tag {
           display: inline-flex;
           align-items: center;
@@ -271,13 +865,14 @@ export default function App() {
           padding: 6px 14px;
           font-size: 13px;
           color: #FFD700;
+          animation: milestoneUnlock 0.5s ease-out;
         }
 
         .status-live {
           display: inline-flex;
           align-items: center;
           gap: 6px;
-          font-family: 'JetBrains Mono', 'Courier New', monospace;
+          font-family: 'Space Mono', monospace;
           font-size: 11px;
           color: #ff4444;
           text-transform: uppercase;
@@ -289,11 +884,28 @@ export default function App() {
           background: #ff4444;
           border-radius: 50%;
           animation: pulse 1.5s infinite;
+          box-shadow: 0 0 10px #ff4444, 0 0 20px #ff4444;
+        }
+
+        .countdown-block {
+          transition: all 0.2s ease;
+        }
+        .countdown-block:hover {
+          transform: scale(1.05);
+        }
+
+        /* Odds card hover effects */
+        .odds-item {
+          transition: all 0.2s ease;
+        }
+        .odds-item:hover {
+          transform: scale(1.02);
+          background: rgba(255, 68, 68, 0.15) !important;
         }
       `}</style>
 
       <div style={{
-        maxWidth: 520, margin: "0 auto", padding: "40px 20px",
+        maxWidth: 520, margin: "0 auto", padding: "60px 20px 40px",
         position: "relative", zIndex: 1,
       }}>
         {/* Header */}
@@ -302,15 +914,22 @@ export default function App() {
             Live Crisis Watch
           </div>
           <h1 style={{
-            fontFamily: "'Playfair Display', Georgia, serif",
-            fontSize: 32, fontWeight: 900, lineHeight: 1.1, margin: 0,
-            background: "linear-gradient(135deg, #FFD700, #FFA500, #FFD700)",
-            WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+            fontFamily: "'Bebas Neue', sans-serif",
+            fontSize: "clamp(42px, 12vw, 56px)",
+            fontWeight: 400,
+            lineHeight: 1.0,
+            margin: 0,
+            letterSpacing: "0.02em",
+            background: "linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FFD700 100%)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            textShadow: "0 4px 30px rgba(255, 215, 0, 0.3)",
+            filter: "drop-shadow(0 2px 10px rgba(255, 165, 0, 0.4))",
           }}>
-            Will Keir Crack<br />Before the Egg?
+            WILL KEIR CRACK<br />BEFORE THE EGG?
           </h1>
           <p style={{
-            fontFamily: "'JetBrains Mono', 'Courier New', monospace",
+            fontFamily: "'Space Mono', monospace",
             fontSize: 12, color: "rgba(255,255,255,0.4)",
             letterSpacing: 1, marginTop: 8, textTransform: "uppercase",
           }}>
@@ -318,23 +937,47 @@ export default function App() {
           </p>
         </div>
 
-        {/* Egg */}
-        <div style={{ animation: "wiggle 4s ease-in-out infinite", marginBottom: 24 }}>
-          <CrackingEgg progress={eggProgress} />
+        {/* Egg with glow effect */}
+        <div style={{ marginBottom: 32, position: "relative", display: "flex", justifyContent: "center" }}>
+          <GlowRing intensity={eggProgress} color={eggProgress > 0.7 ? "#FF4444" : "#FFD700"}>
+            <CrackingEgg progress={eggProgress} onCrack={handleEggCrack} />
+          </GlowRing>
+          {/* Danger level indicator */}
+          {eggProgress > 0.5 && (
+            <div style={{
+              position: "absolute",
+              bottom: -10,
+              left: "50%",
+              transform: "translateX(-50%)",
+              fontFamily: "'Space Mono', monospace",
+              fontSize: 10,
+              textTransform: "uppercase",
+              letterSpacing: 2,
+              color: eggProgress > 0.8 ? "#FF4444" : eggProgress > 0.6 ? "#FFA500" : "#FFD700",
+              textShadow: `0 0 10px ${eggProgress > 0.8 ? "#FF4444" : "#FFD700"}`,
+              animation: eggProgress > 0.8 ? "pulse 0.5s ease-in-out infinite" : undefined,
+            }}>
+              {eggProgress > 0.9 ? "⚠️ CRITICAL" : eggProgress > 0.7 ? "⚠️ HIGH RISK" : "⚡ CRACKING"}
+            </div>
+          )}
         </div>
 
         {/* Countdown to Easter */}
         <div className="card" style={{ marginBottom: 16, animation: "slideUp 0.8s ease 0.2s both" }}>
           <div style={{
             textAlign: "center", marginBottom: 12,
-            fontFamily: "'JetBrains Mono', 'Courier New', monospace",
+            fontFamily: "'Space Mono', monospace",
             fontSize: 11, textTransform: "uppercase", letterSpacing: 2,
             color: "rgba(255,255,255,0.5)",
           }}>
             Creme Egg season ends in
           </div>
           {time.expired ? (
-            <div style={{ textAlign: "center", fontSize: 24, color: "#FFD700" }}>
+            <div style={{
+              textAlign: "center", fontSize: 28, color: "#FFD700",
+              animation: "pulse 1s ease-in-out infinite",
+              textShadow: "0 0 20px rgba(255, 215, 0, 0.5)",
+            }}>
               🥚 THE EGG HAS EXPIRED! DID KEIR? 🥚
             </div>
           ) : (
@@ -342,13 +985,13 @@ export default function App() {
               <CountdownBlock value={time.days} label="Days" />
               <CountdownBlock value={time.hours} label="Hrs" />
               <CountdownBlock value={time.minutes} label="Min" />
-              <CountdownBlock value={time.seconds} label="Sec" />
+              <CountdownBlock value={time.seconds} label="Sec" tick={secondChanged} />
             </div>
           )}
           <div style={{
             textAlign: "center", marginTop: 10, fontSize: 12,
             color: "rgba(255,255,255,0.4)",
-            fontFamily: "'JetBrains Mono', monospace",
+            fontFamily: "'Space Mono', monospace",
           }}>
             Easter Monday · 6th April 2026
           </div>
@@ -357,37 +1000,54 @@ export default function App() {
         {/* Stats */}
         <div className="card" style={{ marginBottom: 16, animation: "slideUp 0.8s ease 0.4s both" }}>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, textAlign: "center" }}>
-            <div>
+            <div style={{ position: "relative" }}>
               <div style={{
-                fontSize: 40, fontWeight: 900, color: "#FFD700",
-                fontFamily: "'Playfair Display', serif",
+                fontSize: 48, fontWeight: 600, color: "#FFD700",
+                fontFamily: "'Cormorant Garamond', serif",
+                fontStyle: "italic",
                 lineHeight: 1,
+                textShadow: "0 0 20px rgba(255, 215, 0, 0.3)",
               }}>
-                {daysInPower}
+                <AnimatedNumber value={daysInPower} />
               </div>
               <div style={{
                 fontSize: 11, color: "rgba(255,255,255,0.5)",
-                fontFamily: "'JetBrains Mono', monospace",
+                fontFamily: "'Space Mono', monospace",
                 textTransform: "uppercase", letterSpacing: 1, marginTop: 4,
               }}>
                 Days as PM
               </div>
-            </div>
-            <div>
+              {/* Sparkle decorations */}
               <div style={{
-                fontSize: 40, fontWeight: 900, color: "#7B2D8E",
-                fontFamily: "'Playfair Display', serif",
+                position: "absolute", top: -5, right: 10,
+                fontSize: 12, animation: "sparkle 2s ease-in-out infinite",
+              }}>✨</div>
+            </div>
+            <div style={{ position: "relative" }}>
+              <div style={{
+                fontSize: 48, fontWeight: 600,
+                fontStyle: "italic",
+                background: "linear-gradient(135deg, #9B4DCA, #7B2D8E, #5B1A6E)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                fontFamily: "'Cormorant Garamond', serif",
                 lineHeight: 1,
+                filter: "drop-shadow(0 0 10px rgba(123, 45, 142, 0.5))",
               }}>
                 {trussMultiple}×
               </div>
               <div style={{
                 fontSize: 11, color: "rgba(255,255,255,0.5)",
-                fontFamily: "'JetBrains Mono', monospace",
+                fontFamily: "'Space Mono', monospace",
                 textTransform: "uppercase", letterSpacing: 1, marginTop: 4,
               }}>
                 Liz Trusses
               </div>
+              {/* Lettuce icon */}
+              <div style={{
+                position: "absolute", top: -8, right: 5,
+                fontSize: 14, animation: "floatParticle0 3s ease-in-out infinite",
+              }}>🥬</div>
             </div>
           </div>
         </div>
@@ -409,7 +1069,7 @@ export default function App() {
           }}>
             <div style={{
               fontSize: 11, color: "rgba(255,255,255,0.4)",
-              fontFamily: "'JetBrains Mono', monospace",
+              fontFamily: "'Space Mono', monospace",
               textTransform: "uppercase", letterSpacing: 2, marginBottom: 8,
             }}>
               Current Achievement Unlocked
@@ -421,7 +1081,7 @@ export default function App() {
             {nextMilestone && (
               <div style={{
                 marginTop: 12, fontSize: 12, color: "rgba(255,255,255,0.4)",
-                fontFamily: "'JetBrains Mono', monospace",
+                fontFamily: "'Space Mono', monospace",
               }}>
                 Next: {nextMilestone.icon} {nextMilestone.label}
                 <br />({nextMilestone.days - daysInPower} days to go)
@@ -434,7 +1094,7 @@ export default function App() {
         <div className="card" style={{ marginBottom: 16, animation: "slideUp 0.8s ease 0.7s both" }}>
           <div style={{
             fontSize: 11, color: "rgba(255,255,255,0.4)",
-            fontFamily: "'JetBrains Mono', monospace",
+            fontFamily: "'Space Mono', monospace",
             textTransform: "uppercase", letterSpacing: 2, marginBottom: 12,
             textAlign: "center",
           }}>
@@ -444,22 +1104,43 @@ export default function App() {
             display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8,
           }}>
             {[
-              { label: "Gone by Easter", odds: "4/6", hot: true },
-              { label: "Survives 2026", odds: "4/1", hot: false },
-              { label: "April–June exit", odds: "5/2", hot: true },
-              { label: "Full term 😂", odds: "33/1", hot: false },
+              { label: "Gone by Easter", odds: "4/6", hot: true, icon: "🔥" },
+              { label: "Survives 2026", odds: "4/1", hot: false, icon: "🤞" },
+              { label: "April–June exit", odds: "5/2", hot: true, icon: "📅" },
+              { label: "Full term 😂", odds: "33/1", hot: false, icon: "🦄" },
             ].map((bet, i) => (
-              <div key={i} style={{
+              <div key={i} className="odds-item" style={{
                 display: "flex", justifyContent: "space-between", alignItems: "center",
-                padding: "8px 12px", borderRadius: 8,
+                padding: "10px 12px", borderRadius: 8,
                 background: bet.hot ? "rgba(255, 68, 68, 0.1)" : "rgba(255,255,255,0.03)",
                 border: `1px solid ${bet.hot ? "rgba(255, 68, 68, 0.3)" : "rgba(255,255,255,0.08)"}`,
+                cursor: "pointer",
+                position: "relative",
+                overflow: "hidden",
               }}>
-                <span style={{ fontSize: 12, color: "rgba(255,255,255,0.7)" }}>{bet.label}</span>
+                {bet.hot && (
+                  <div style={{
+                    position: "absolute",
+                    top: 0,
+                    right: 0,
+                    width: 0,
+                    height: 0,
+                    borderLeft: "20px solid transparent",
+                    borderTop: "20px solid #ff4444",
+                  }} />
+                )}
                 <span style={{
-                  fontSize: 14, fontWeight: 700,
+                  fontSize: 12, color: "rgba(255,255,255,0.7)",
+                  display: "flex", alignItems: "center", gap: 6,
+                }}>
+                  <span style={{ fontSize: 14 }}>{bet.icon}</span>
+                  {bet.label}
+                </span>
+                <span style={{
+                  fontSize: 15, fontWeight: 700,
                   color: bet.hot ? "#ff4444" : "#FFD700",
-                  fontFamily: "'JetBrains Mono', monospace",
+                  fontFamily: "'Space Mono', monospace",
+                  textShadow: bet.hot ? "0 0 10px rgba(255, 68, 68, 0.5)" : "0 0 10px rgba(255, 215, 0, 0.3)",
                 }}>
                   {bet.odds}
                 </span>
@@ -468,7 +1149,7 @@ export default function App() {
           </div>
           <div style={{
             fontSize: 10, color: "rgba(255,255,255,0.25)", textAlign: "center",
-            marginTop: 8, fontFamily: "'JetBrains Mono', monospace",
+            marginTop: 8, fontFamily: "'Space Mono', monospace",
           }}>
             Source: William Hill · Jan 2026 · For entertainment only
           </div>
@@ -476,24 +1157,50 @@ export default function App() {
 
         {/* Footer */}
         <div style={{
-          textAlign: "center", padding: "20px 0",
+          textAlign: "center", padding: "24px 0",
           animation: "slideUp 0.8s ease 0.8s both",
         }}>
+          {/* Animated emoji parade */}
           <div style={{
-            fontSize: 20, marginBottom: 8,
+            fontSize: 24, marginBottom: 12,
+            display: "flex", justifyContent: "center", gap: 8,
           }}>
-            🥚🇬🇧🥚
+            {["🥚", "🇬🇧", "🥬", "📉", "🥚"].map((emoji, i) => (
+              <span key={i} style={{
+                animation: `floatParticle${i % 3} ${2 + i * 0.3}s ease-in-out infinite`,
+                animationDelay: `${i * 0.2}s`,
+              }}>{emoji}</span>
+            ))}
           </div>
           <div style={{
-            fontSize: 10, color: "rgba(255,255,255,0.2)",
-            fontFamily: "'JetBrains Mono', monospace",
-            lineHeight: 1.6,
+            fontSize: 10, color: "rgba(255,255,255,0.25)",
+            fontFamily: "'Space Mono', monospace",
+            lineHeight: 1.8,
+            maxWidth: 300,
+            margin: "0 auto",
           }}>
             A completely impartial and definitely not biased<br />
             public service announcement<br />
-            <span style={{ color: "rgba(255,255,255,0.1)" }}>
-              No Creme Eggs were harmed in the making of this app
+            <span style={{
+              display: "inline-block",
+              marginTop: 8,
+              padding: "4px 12px",
+              background: "rgba(255,255,255,0.03)",
+              borderRadius: 12,
+              border: "1px solid rgba(255,255,255,0.05)",
+              color: "rgba(255,255,255,0.15)",
+            }}>
+              No Creme Eggs were harmed
             </span>
+          </div>
+          {/* Version tag */}
+          <div style={{
+            marginTop: 16,
+            fontSize: 9,
+            color: "rgba(255,255,255,0.1)",
+            fontFamily: "'Space Mono', monospace",
+          }}>
+            v1.0.0 · Made with 🥚 and questionable political commentary
           </div>
         </div>
       </div>
