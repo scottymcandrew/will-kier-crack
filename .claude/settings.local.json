@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install)",
+      "Bash(npm run build:*)",
+      "Bash(git add:*)",
+      "Bash(git restore:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\n🥚 Add absolutely necessary dramatic flair for national crisis monitoring\n\n- Breaking news ticker \\(journalism has never been more impartial\\)\n- Floating particles because the political situation needed more chaos\n- Screen shake when egg cracks \\(just like the economy\\)\n- Confetti on milestone unlocks \\(celebrating mediocrity since 2024\\)\n- Fonts so fancy even the egg looks distinguished\n- 11.8 Liz Trusses and counting\n\nNo lettuces were consulted in the making of this update.\nEOF\n\\)\")",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\n📢 Add social sharing for maximum national hysteria\n\n- Share buttons: Twitter, WhatsApp, Facebook, Copy link\n- Pre-filled tweet text with live Liz Truss count\n- Enhanced OG meta tags for link previews\n- Theme color for mobile browsers \\(crisis purple\\)\n- SEO keywords for concerned citizens searching \"egg politics\"\n\nThe algorithm demands engagement. The egg demands witnesses.\nEOF\n\\)\")"
+    ]
+  }
+}

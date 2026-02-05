@@ -576,6 +576,133 @@ function NewsTicker() {
   );
 }
 
+// Share buttons component
+function ShareButtons({ daysInPower, trussMultiple }) {
+  const [copied, setCopied] = useState(false);
+  const siteUrl = "https://will-keir-crack.vercel.app";
+
+  const shareText = `🥚 CRISIS UPDATE: Keir Starmer has survived ${daysInPower} days (${trussMultiple} Liz Trusses)... but will he outlast the Creme Egg?
+
+Live countdown: `;
+
+  const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(siteUrl)}`;
+  const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(siteUrl)}&quote=${encodeURIComponent(shareText)}`;
+  const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareText + siteUrl)}`;
+
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(siteUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      // Fallback for older browsers
+      const textArea = document.createElement("textarea");
+      textArea.value = siteUrl;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textArea);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const buttonStyle = {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    padding: "10px 16px",
+    borderRadius: 8,
+    border: "none",
+    cursor: "pointer",
+    fontSize: 13,
+    fontFamily: "'Space Mono', monospace",
+    fontWeight: 700,
+    textDecoration: "none",
+    transition: "all 0.2s ease",
+    flex: 1,
+    minWidth: 0,
+  };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <div style={{
+        fontSize: 11,
+        color: "rgba(255,255,255,0.4)",
+        fontFamily: "'Space Mono', monospace",
+        textTransform: "uppercase",
+        letterSpacing: 2,
+        textAlign: "center",
+        marginBottom: 4,
+      }}>
+        Spread the crisis
+      </div>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        <a
+          href={twitterUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            ...buttonStyle,
+            background: "#1DA1F2",
+            color: "white",
+          }}
+          onMouseOver={(e) => e.currentTarget.style.transform = "scale(1.05)"}
+          onMouseOut={(e) => e.currentTarget.style.transform = "scale(1)"}
+        >
+          <span style={{ fontSize: 16 }}>𝕏</span>
+          <span>Tweet</span>
+        </a>
+        <a
+          href={whatsappUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            ...buttonStyle,
+            background: "#25D366",
+            color: "white",
+          }}
+          onMouseOver={(e) => e.currentTarget.style.transform = "scale(1.05)"}
+          onMouseOut={(e) => e.currentTarget.style.transform = "scale(1)"}
+        >
+          <span style={{ fontSize: 16 }}>💬</span>
+          <span>WhatsApp</span>
+        </a>
+        <a
+          href={facebookUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            ...buttonStyle,
+            background: "#1877F2",
+            color: "white",
+          }}
+          onMouseOver={(e) => e.currentTarget.style.transform = "scale(1.05)"}
+          onMouseOut={(e) => e.currentTarget.style.transform = "scale(1)"}
+        >
+          <span style={{ fontSize: 16 }}>f</span>
+          <span>Share</span>
+        </a>
+        <button
+          onClick={copyToClipboard}
+          style={{
+            ...buttonStyle,
+            background: copied ? "#10B981" : "rgba(255,255,255,0.1)",
+            color: copied ? "white" : "#FFD700",
+            border: copied ? "none" : "1px solid rgba(255, 215, 0, 0.3)",
+          }}
+          onMouseOver={(e) => { if (!copied) e.currentTarget.style.transform = "scale(1.05)"; }}
+          onMouseOut={(e) => e.currentTarget.style.transform = "scale(1)"}
+        >
+          <span style={{ fontSize: 14 }}>{copied ? "✓" : "🔗"}</span>
+          <span>{copied ? "Copied!" : "Copy"}</span>
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function ProgressBar({ progress, label }) {
   return (
     <div style={{ width: "100%", marginBottom: 8 }}>
@@ -1059,6 +1186,11 @@ export default function App() {
             progress={Math.min(daysInPower / 1826, 1)}
             label="📊 Starmer stamina (full 5yr term)"
           />
+        </div>
+
+        {/* Share Buttons */}
+        <div className="card" style={{ marginBottom: 16, animation: "slideUp 0.8s ease 0.55s both" }}>
+          <ShareButtons daysInPower={daysInPower} trussMultiple={trussMultiple} />
         </div>
 
         {/* Milestone */}
